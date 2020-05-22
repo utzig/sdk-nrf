@@ -1,0 +1,4 @@
+nRF52820 Drivers
+================
+
+.. doxygenpage:: nrf52820_drivers

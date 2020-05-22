@@ -1,0 +1,4 @@
+nRF5340 drivers
+===============
+
+.. doxygenpage:: nrf5340_drivers
