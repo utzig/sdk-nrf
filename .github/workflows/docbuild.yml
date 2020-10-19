@@ -19,20 +19,17 @@ jobs:
         path: ~/.cache/pip
         key: ${{ runner.os }}-doc-pip
 
-    - name: Install python dependencies
+    - name: Install packages
+      run: |
+        sudo apt-get install -y ninja-build doxygen mscgen sshpass
+
+    - name: Install base dependencies
+      working-directory: ncs
       run: |
         pip3 install -U pip
         pip3 install -U setuptools
         export PATH="$HOME/.local/bin:$PATH"
-        pip3 install -U west
-        pip3 install sphinx==3.2.1
-        pip3 install breathe==4.22.1
-        pip3 install recommonmark==0.6.0
-        pip3 install CommonMark==0.9.1
-        pip3 install -U sphinxcontrib-mscgen
-        pip3 install sphinx-tabs==1.3.0
-        pip3 install sphinx-rtd-theme==0.4.3
-        pip3 install docutils==0.16
+        pip3 install -r nrf/scripts/requirements-base.txt
 
     - name: West init and update
       working-directory: ncs
@@ -41,3 +38,54 @@ jobs:
         west init -l nrf
         west update
         west zephyr-export
+
+    - name: Install documentation dependencies
+      working-directory: ncs
+      run: |
+        pip3 install -r zephyr/scripts/requirements-doc.txt
+        pip3 install -r nrf/scripts/requirements-doc.txt
+
+    - name: Build documentation
+      working-directory: ncs
+      run: |
+        export PATH="$HOME/.local/bin:$PATH"
+        mkdir -p _build && cd _build
+        cmake -GNinja ../nrf/doc
+        ninja build-all
+
+    - name: Check build warnings
+      working-directory: ncs
+      run: |
+        cd _build
+        if [ -s Kconfig/sphinx.log ]; then
+          errors=$(cat Kconfig/sphinx.log)
+          echo "::error file=Kconfig/sphinx.log::$errors"
+          exit 1
+        fi
+        if [ -s mcuboot/sphinx.log ]; then
+          errors=$(cat mcuboot/sphinx.log)
+          echo "::error file=mcuboot/sphinx.log::$errors"
+          exit 1
+        fi
+        if [ -s nrf/doc.warnings ]; then
+          errors=$(cat nrf/doc.warnings)
+          echo "::error file=nrf/doc.warnings::$errors"
+          exit 1
+        fi
+        if [ -s nrfxlib/doc.log ]; then
+          errors=$(cat nrfxlib/doc.log)
+          echo "::error file=nrfxlib/doc.log::$errors"
+          exit 1
+        fi
+
+    - name: Archive documentation
+      working-directory: ncs
+      run: |
+        cd _build
+        tar -C html -zcf doc_build_from_gh.tar.gz .
+
+    - name: Upload documentation
+      working-directory: ncs
+      run: |
+        cd _build
+        sshpass -v -p ${{ secrets.NCS_DOC_PWD }} scp -P 2222 ${{ secrets.NCS_DOC_USR }}@transfer.nordicsemi.no:. doc_build_from_gh.tar.gz
