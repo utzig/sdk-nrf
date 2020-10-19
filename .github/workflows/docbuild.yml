@@ -1,6 +1,12 @@
 name: Documentation Build
 
-on: [push, pull_request]
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - gh-actions-doc
 
 jobs:
   build:
@@ -78,8 +84,20 @@ jobs:
           exit 1
         fi
 
-    - name: Archive documentation
+    - name: Archive and upload documentation
       working-directory: ncs
+      env:
+        NCS_DOC_PWD: ${{ secrets.NCS_DOC_PWD }}
       run: |
+        if [[ $GITHUB_REF = "refs/pull/"* ]]; then
+          suffix="pr_$(echo $GITHUB_REF | sed 's#refs/pull/\([0-9]\+\)/.*$#\1#')"
+        else
+          suffix="master"
+        fi
+        archive="doc_build_${suffix}.tar.gz"
         cd _build
-        tar -C html -zcf doc_build_from_gh.tar.gz .
+        tar -C html -zcf $archive .
+        mkdir -p ~/.ssh && \
+          ssh-keyscan -p 2222 transfer.nordicsemi.no >> ~/.ssh/known_hosts
+        echo "put ${archive}" | \
+          sshpass -p $NCS_DOC_PWD sftp -P 2222 -o BatchMode=no -b - ncs-doc@transfer.nordicsemi.no
