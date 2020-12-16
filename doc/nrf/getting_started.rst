@@ -8,7 +8,7 @@ Alternatively, check the :ref:`gs_installing` section for instructions on settin
 
 We recommend using SEGGER Embedded Studio for building your applications. See :ref:`gs_programming` for the download links and instructions.
 
-Add some breaking link here to :ref:`foobar`.
+Add some breaking link here to :ref:`lib_nrf_cloud`.
 
 Once you are set up, check out the :ref:`samples`.
 If this is the first time you work with embedded devices, it is probably a good idea to program an unchanged sample to your board first and test if it works as expected.
