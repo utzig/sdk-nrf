@@ -7,6 +7,8 @@ nRF9160: UDP
    :local:
    :depth: 2
 
+Random change to drop later.
+
 The UDP sample demonstrates the sequential transmission of UDP packets to a predetermined server identified by an IP address and a port.
 The sample uses the :ref:`nrfxlib:nrf_modem` and :ref:`lte_lc_readme` library.
 
